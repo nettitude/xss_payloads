@@ -46,6 +46,19 @@ Get the internal IP address of a victim and then have them do a TCP port scan of
 
 Pop up a login page which sends the entered credentials back to this URL.
 
+### recon.php ###
+
+Passes back information about where it was executed:
+
+ - page URL
+ - script URL
+ - user's IP address
+ - Page content
+ - Any non HttpOnly cookies present
+ - User agent string
+
+And then logs it all into either a file or a database. Great for when a collaborator alert is generated asynchronously and you need more info about where execution is occuring.
+
 ### unc_hashstealer.php
 
 Fire up Responder.py on the same host as this script and then inject this payload. All links on the injected page will be turned into UNC paths to the same host.
