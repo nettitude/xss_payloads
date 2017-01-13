@@ -30,7 +30,7 @@
   $db_host = 'localhost';
 
   // Use this SQL to set up the DB
-  // CREATE TABLE log ( id int NOT NULL AUTO_INCREMENT, logtime DATETIME, method varchar(10), pageurl varchar(255), scripturl varchar(255), cookies varchar(255), useragent varchar(255), userip varchar(20), html TEXT, PRIMARY KEY (id) )
+  // CREATE TABLE log ( id int NOT NULL AUTO_INCREMENT, logtime DATETIME, method varchar(10), pageurl varchar(255), scripturl varchar(255), referer varchar(255), cookies varchar(255), useragent varchar(255), userip varchar(20), html TEXT, PRIMARY KEY (id) )
 
   $url = 'http';
   if( !empty( $_SERVER['HTTPS'] ) ){
@@ -114,6 +114,9 @@
   // URL of the script itself
   $info->scripturl = $url;
 
+  // Referer
+  $info->referer = $_SERVER['HTTP_REFERER'];
+
   // User's user agent
   $info->useragent = $_SERVER['HTTP_USER_AGENT'];
 
@@ -124,7 +127,7 @@
 
   $info->logtime = date('Y-m-d H:i:s');
 
-  $aProperties = array( 'logtime', 'method', 'pageurl', 'scripturl', 'cookies', 'useragent', 'userip', 'html' );
+  $aProperties = array( 'logtime', 'method', 'pageurl', 'scripturl', 'referer', 'cookies', 'useragent', 'userip', 'html' );
   
   // Log this request
   if( $logging == 'file' ){
