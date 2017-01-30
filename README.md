@@ -34,6 +34,10 @@ Steal the content of the current page, a specific element or another page within
 
 Steal cookies from the site.
 
+### formjacker.php 
+
+Man-in-the-middle all forms on the current page and also exploit browser autofill functionality in order to steal personal information.
+
 ### formsubmitter.php
 
 Grab a page from somewhere within the same origin, fill in a form on it and then submit that form.
