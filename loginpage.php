@@ -52,5 +52,7 @@ $html = "
 </form>
 </div>";
 $html = preg_replace( "/[\n\r]/", "", $html ); 
-echo "document.body.innerHTML += \"$html\";";
+echo "window.onload=function(){\n";
+echo "  document.body.innerHTML += \"$html\";";
+echo "}\n";
 ?>
