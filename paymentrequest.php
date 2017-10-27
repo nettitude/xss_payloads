@@ -7,39 +7,45 @@
   *  - value - cash value of purchase (default: "10")
   *  - confirmation - URL of the payment confirmation page to forward to after receiving details
   */
-  header( "Content-type: text/javascript" );
-
-  $url = 'http';
-  if( !empty( $_SERVER['HTTPS'] ) ){
-    $url .= 's';
-  }
-  $url .= "://";
-  if( empty( $_SERVER['HTTP_HOST'] ) ){
-    $url .= $_SERVER["SERVER_ADDR"];
-  }else{
-    $url .= $_SERVER['HTTP_HOST'];
-  }
-  $url .= $_SERVER["PHP_SELF"];
-
-  if( !empty( $_GET["label"] ) ){
-    $label = $_GET["label"];
-  }else{
-    $label = "Total";
-  }
-
-  if( !empty( $_GET["currency"] ) ){
-    $currency = $_GET["currency"];
-  }else{
-    $currency = "GBP";
-  }
-
-  if( !empty( $_GET["value"] ) ){
-    $value = $_GET["value"];
-  }else{
-    $value = "10";
-  }
-  
   if(empty($_GET["data"])){
+    header( "Content-type: text/javascript" );
+
+    $url = 'http';
+    if( !empty( $_SERVER['HTTPS'] ) ){
+      $url .= 's';
+    }
+    $url .= "://";
+    if( empty( $_SERVER['HTTP_HOST'] ) ){
+      $url .= $_SERVER["SERVER_ADDR"];
+    }else{
+      $url .= $_SERVER['HTTP_HOST'];
+    }
+    $url .= $_SERVER["PHP_SELF"];
+
+    if( !empty( $_GET["label"] ) ){
+      $label = $_GET["label"];
+    }else{
+      $label = "Total";
+    }
+
+    if( !empty( $_GET["currency"] ) ){
+      $currency = $_GET["currency"];
+    }else{
+      $currency = "GBP";
+    }
+
+    if( !empty( $_GET["value"] ) ){
+      $value = $_GET["value"];
+    }else{
+      $value = "10";
+    }
+   
+    if( !empty( $_GET["confirmation"] ) ){
+      $confirmation = $_GET["confirmation"];
+    }else{
+      $confirmation = null;
+    }
+
 ?>
 if(window.PaymentRequest) {  
 
@@ -64,27 +70,40 @@ if(window.PaymentRequest) {
 
   const request = new PaymentRequest( supportedPaymentMethods, paymentDetails, options );
 
-  request.show()
-  .then((paymentResponse) => {
-
-    // Send payment response back to this URL
-    console.log(paymentResponse);
-    url = '<?=$url?>?data=' + btoa(JSON.stringify(paymentResponse));
-    console.log(url);
-    new Image().src = url;
-    return paymentResponse.complete();
-  }).catch((err) => {
-    console.log("Payment request failed");
-  });
-  <?php
-    if( !empty($_GET["confirmation"]) ){
-  ?>
-      window.location = "<?=$_GET["confirmation"]?>";
-  <?php  } ?>
-} else {  
+  promise = request.show()
+    .then((paymentResponse) => {
+      return paymentResponse.complete()
+        .then(() => {;
+          // Send payment response back to this URL
+          url = '<?=$url?>?data=' + btoa(JSON.stringify(paymentResponse));
+          i= new Image();
+          i.addEventListener('load', function(){
+          <?php if($confirmation){ ?>
+            window.location = '<?=$confirmation?>';
+          <?php }else{ ?>
+            alert("Payment received, thank you")
+          <?php } ?>
+          },false);
+          i.src = url;
+        });
+    
+    }).catch((err) => {
+      console.log("Payment request failed");
+    });
+} else { 
   // Fallback to traditional checkout  
   console.log("PaymentRequest API not supported in this browser");
 }
 <?php
+  }else{
+    
+    // Output a blank gif
+    header( "Content-type: image/gif" );
+    header( "Cache-control: no-cache, no-store, max-age=0, private" );
+    header( "Pragma: no-cache" );
+    echo base64_decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+    
+    // Save CC data here if required
+  
   }
 ?>
