@@ -75,12 +75,12 @@
       "code" => "eval('{payload}')"
     ],
     [
-      "name" => "base64 (atob())",
-      "desc" => "base64 encode and execute using eval()",
+      "name" => "Base64 (atob())",
+      "desc" => "Base64 encode and execute using eval()",
       "code" => "eval(atob('{payloadb64}'))"
     ],
     [
-      "name" => "reverse",
+      "name" => "Reverse",
       "desc" => "Reverse payload string and execute using eval()",
       "code" => "eval('{payloadrev}'.split('').reverse().join(''))"
     ],
@@ -92,7 +92,7 @@
     [
       "name" => "Character hex codes",
       "desc" => "Construct the payload using hex value of each character",
-      "code" => "eval({payloadhex})"
+      "code" => "eval('{payloadhex}')"
     ]
   ];
   
@@ -303,6 +303,12 @@ window.onload = initForm;
     width: 50em;
     height: 30em;
   }
+  select, input {
+    width: 50em;
+  }
+  div.desc {
+    font-size: 80%;
+  }
 </style>
 </head>
 <body>
@@ -317,7 +323,7 @@ window.onload = initForm;
   }
 ?>
     </select>
-    <div id="payload_desc"></div>
+    <div id="payload_desc" class="desc"></div>
   </div>
   <div id="filepicker_container" class="container">
     <label for="filepicker">Built-in script</label>
@@ -349,7 +355,7 @@ window.onload = initForm;
   }
 ?>
     </select>
-    <div id="obfuscation_desc"></div>
+    <div id="obfuscation_desc" class="desc"></div>
   </div>
   <div>
     <label for="injectionid">Injection type</label>
@@ -360,7 +366,7 @@ window.onload = initForm;
   }
 ?>
     </select>
-    <div id="injection_desc"></div>
+    <div id="injection_desc" class="desc"></div>
   </div>
   <div>
     <label for="output">Output</label>
