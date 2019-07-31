@@ -151,7 +151,6 @@
       "name" => "window['\\x73\\x65\\x74\\x54\\x69\\x6d\\x65\\x6f\\x75\\x74']()",
       "desc" => "Even sneakier way of calling the setTimeout() function",
       "code" => "window['\\x73\\x65\\x74\\x54\\x69\\x6d\\x65\\x6f\\x75\\x74']({obfuscated},0)"
->>>>>>> b8b866e
     ]
   ];
   
