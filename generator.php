@@ -386,6 +386,41 @@
     "onvolumechange",
     "onwaiting"
   ];
+
+  // Character substitution
+  // Encoding
+  $aEncoding = [
+    [
+      "name"=>"JSON",
+      "desc"=>"Encode for inclusion in a JSON string (escape double quotes)",
+      "func"=>"str_replace",
+      "args"=>['"','\"','[payload]']
+    ],
+    [
+      "name"=>"URL",
+      "desc"=>"URL encode key characters",
+      "func"=>"urlencode",
+      "args"=>["[payload]"]
+    ],
+    [
+      "name"=>"SQL",
+      "desc"=>"Escape strings for SQL statements",
+      "func"=>"addslashes",
+      "args"=>["[payload]"]
+    ],
+    [
+      "name"=>"HTML",
+      "desc"=>"Encode HTML characters",
+      "func"=>"htmlspecialchars",
+      "args"=>["[payload]"]
+    ],
+    [
+      "name"=>"Base64",
+      "desc"=>"Base 64 encode payload",
+      "func"=>"base64_encode",
+      "args"=>["[payload]"]
+    ]
+  ];
   
   // JSFuck: http://www.jsfuck.com/
   // JSFuck PHP port: https://github.com/Zaczero/jsfuck.php
@@ -760,8 +795,8 @@
 
   // Logic for generating a payload
   function generatePayload( $form ){
-    global $aPayloads, $aObfuscation, $aExecution, $aInjections;
-    $required = ['payloadid','injectionid','obfuscationid','executionid'];
+    global $aPayloads, $aObfuscation, $aExecution, $aInjections, $aEncoding;
+    $required = ['payloadid','injectionid','obfuscationid','executionid','encoding_used'];
     foreach( $required as $item ){
       if( !in_array( $item, array_keys( $form ) ) ) return $item." not provided";
     }
@@ -832,6 +867,21 @@
         $code = str_replace( '{'.$f.'}', $form[$f], $code );
       }
     }
+
+    // Encoding
+    if( !empty($form["encoding_used"]) ){
+      $encs = preg_split("/,/",$form["encoding_used"]);
+      foreach( $encs as $ename ){
+        foreach( $aEncoding as $e ){
+          if( $e["name"] == $ename ) break;
+        }
+        $args = [];
+        foreach( $e["args"] as $a ){
+          $args[] = str_replace( "[payload]", $code, $a );
+        }
+        $code = call_user_func_array( $e["func"], $args );
+      }
+    }
     $rtn['payload'] = $code;
     $rtn['inject'] = $code;
     return $rtn;
@@ -853,18 +903,27 @@
 <title>XSS Payload Generator</title>
 <script>
 function createPayload(){
-  ids = 'payloadid,obfuscationid,executionid,injectionid'.split(',');
+  ids = 'payloadid,obfuscationid,executionid,injectionid,encoding_used'.split(',');
   var args = '';
   opts = [];
   for( var i=0; i<ids.length; i++ ){
     k = ids[i];
     e = document.getElementById(k);
-    opts[k] = e.options[e.selectedIndex].value;
+    if( e.multiple ){
+      vals = [];
+      for( var j=0; j<e.options.length; j++ ){
+        vals.push(e.options[j].value);
+      }
+      v = vals.join();
+    }else{
+      v = e.value;
+    }
+    opts[k] = v; 
+    // console.log(k,v);
   }
   inp = document.getElementsByClassName('container');
   for( var i=0; i<inp.length; i++ ){
     inp[i].style.display = 'None';
-    // console.log(inp[i]);  
   }
   switch( opts['payloadid'] ){
 <?php
@@ -909,7 +968,7 @@ function createPayload(){
   x = new XMLHttpRequest();
   x.onreadystatechange = function(){
     if( x.readyState == 4 && x.status == 200 ){
-      console.log( x.responseText );
+      // console.log( x.responseText );
       data = JSON.parse( x.responseText );
       document.getElementById('output').value = data['inject'];
       document.getElementById('payload_desc').innerText = data['meta']['payload']['desc'];
@@ -927,16 +986,74 @@ function setUrl(){
   u.value = f.options[f.selectedIndex].value;
   u.onchange();
 }
+
+function selectEncoding( opt ){
+  used  = document.getElementById("encoding_used");
+  o = document.createElement("option");
+  o.innerText = opt.innerText;
+  o.value = opt.value;
+  o.ondblclick = encodingOptClick;
+  used.add(o);
+}
+
+function encodingClick( e ){
+  btn = e.target || e.srcElement;
+  used  = document.getElementById("encoding_used");
+  avail = document.getElementById("encoding_available");
+  if( btn.classList.contains("select") ){
+    for( var i=0; i<avail.selectedOptions.length; i++ ){
+      selectEncoding( avail.selectedOptions[i] );
+    }
+  }
+  if( btn.classList.contains("deselect") ){
+    els = [];
+    for( var i=0; i<used.selectedOptions.length; i++ ){
+      els.push( used.selectedOptions[i] );
+    }
+    for( var i=0; i<els.length; i++ ){
+      els[i].remove();
+    }
+  }
+  createPayload();
+}
+
+function encodingOptClick( e ){
+  console.log('click');
+  opt = e.target || e.srcElement;
+  lst = opt.parentElement;
+  console.log(opt);
+  if( lst.id == "encoding_available" ){
+    o = document.createElement("option");
+    o.innerText=opt.innerText;
+    o.value = opt.value;
+    document.getElementById("encoding_used").add(o);
+  }
+  if( lst.id == "encoding_used" ){
+    opt.remove();
+  }
+  createPayload();
+}
+
 function initForm(){
   tags = "input,select".split(',');
-  console.log( tags );
   for(var j=0; j<tags.length; j++){
     opts = document.getElementsByTagName(tags[j]);
     for( var i=0; i<opts.length; i++ ){
-      console.log(opts[i]);
       opts[i].onchange = createPayload;
     }
   }
+
+  enc = document.getElementById("encoding");
+  btns = enc.getElementsByTagName("button");
+  for( var i=0; i<btns.length; i++ ){
+    btns[i].onclick=encodingClick;
+  }
+  opts = enc.getElementsByTagName("option");
+  console.log(opts);
+  for( var i=0; i<opts.length; i++ ){
+    opts[i].addEventListener("dblclick",encodingOptClick);
+  }
+
   document.getElementById('filepicker').onchange = setUrl;
   createPayload();
 }
@@ -952,13 +1069,35 @@ window.onload = initForm;
   }
   textarea {
     width: 50em;
-    height: 30em;
+    height: 15em;
   }
   select, input {
     width: 50em;
   }
+  div {
+    clear: left;
+  }
   div.desc {
     font-size: 80%;
+  }
+  div.multiselect {
+    width: 19em;
+    float: left;
+    clear: none;
+    padding: 0 1em 1em 0;
+  }
+  div.multiselect select {
+    width: 23em;
+    height: 7em;
+  }
+  div.multiselect_buttons {
+    width: 2em;
+    float: left;
+    clear: none;
+    margin-top: 3em;
+  }
+  div#encoding p {
+    margin-bottom: 0;
   }
 </style>
 </head>
@@ -1051,6 +1190,28 @@ window.onload = initForm;
 ?>
     </select>
     <div id="event_desc" class="desc"></div>
+  </div>
+  <div id="encoding">
+    <p>Encoding</p>
+    <div class="list_available multiselect">
+      <label for="encoding_available">Available</label>
+      <select id="encoding_available" multiple>
+<?php
+  foreach( $aEncoding as $id => $item ){
+    echo "        <option value=\"".$item["name"]."\" title=\"".htmlentities($item["desc"])."\">".$item["name"]."</option>\n";
+  }
+?>
+      </select>
+    </div>
+    <div class="multiselect_buttons">
+      <button type="button" class="select">&raquo;</button>
+      <button type="button" class="deselect">&laquo;</button>
+    </div>
+    <div class="list_used multiselect">
+      <label for="encoding_used">Using</label>
+      <select id="encoding_used" multiple>
+      </select>
+    </div>
   </div>
   <div>
     <label for="output">Output</label>
