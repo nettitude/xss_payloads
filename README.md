@@ -20,6 +20,11 @@ Some of the files are plain JavaScript .js files, others are PHP scripts which s
 * If you're running these over HTTPS for actual exploitation rather than a PoC, you'll need a proper trusted TLS cert (Let's Encrypt CA, for example) otherwise victim's browsers won't fetch the files at all. If it's for a PoC you can just temporarily trust your self signed cert.
 * Hit F12 and view the debug console for any information about why a particular script might not work
 
+
+## Generator
+
+`generator.php` is a tool which can help to load one of the below payloads or to inject a custom payload using various injection, execution and encoding options.
+
 ## Payloads
 
 ### apache_httponly_bypass.js
