@@ -397,6 +397,12 @@
       "args"=>['"','\"','[payload]']
     ],
     [
+      "name"=>"JS Unicode",
+      "desc"=>"Encode as unicode escaped string",
+      "func"=>"unicode_escape",
+      "args"=>['[payload]']
+    ],
+    [
       "name"=>"URL",
       "desc"=>"URL encode key characters",
       "func"=>"urlencode",
@@ -421,7 +427,15 @@
       "args"=>["[payload]"]
     ]
   ];
-  
+ 
+  function unicode_escape( $payload ){
+    $rtn = '';
+    for ($i = 0; $i < strlen($payload); $i++) {
+      $rtn .= '\\u' . str_pad(dechex(ord($payload[$i])), 4, '0', STR_PAD_LEFT);
+    }
+    return $rtn;
+  }
+
   // JSFuck: http://www.jsfuck.com/
   // JSFuck PHP port: https://github.com/Zaczero/jsfuck.php
   class JSFuck {
