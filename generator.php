@@ -398,8 +398,14 @@
     ],
     [
       "name"=>"JS Unicode",
-      "desc"=>"Encode as unicode escaped string",
+      "desc"=>"Encode as JavaScript unicode escaped string",
       "func"=>"unicode_escape",
+      "args"=>['[payload]']
+    ],
+    [
+      "name"=>"JS Hex",
+      "desc"=>"Encode as JavaScript hex escaped string",
+      "func"=>"hex_escape",
       "args"=>['[payload]']
     ],
     [
@@ -434,6 +440,9 @@
       $rtn .= '\\u' . str_pad(dechex(ord($payload[$i])), 4, '0', STR_PAD_LEFT);
     }
     return $rtn;
+  }
+  function hex_escape( $payload ){
+    return str_replace( '\\u00','\\x',unicode_escape( $payload ) );
   }
 
   // JSFuck: http://www.jsfuck.com/
